@@ -157,36 +157,36 @@ export default function CompanionAvatar({
             </linearGradient>
           </defs>
 
-          {/* Forehead Spirit Tuft / Droplet (Signature Minyx crown) */}
+          {/* Forehead Spirit Flame Wisp (Signature Minyx curled droplet from user screenshot) */}
           <g className="animate-pulse">
             <path
-              d="M 160 30 C 152 48 142 65 152 82 C 160 95 168 85 168 70 C 168 52 172 40 160 30 Z"
+              d="M 160 22 C 168 18 174 24 172 32 C 170 38 163 42 165 52 C 167 62 173 70 166 84 C 160 92 153 82 153 72 C 153 58 148 48 155 35 C 158 28 156 24 160 22 Z"
               fill="url(#tuftGrad)"
-              style={{ filter: `drop-shadow(0 0 12px ${currentTheme.primary})` }}
+              style={{ filter: `drop-shadow(0 0 14px ${currentTheme.primary})` }}
             />
-            <circle cx="160" cy="42" r="3" fill="#ffffff" opacity="0.9" />
+            <circle cx="163" cy="34" r="3.5" fill="#ffffff" opacity="0.9" />
           </g>
 
-          {/* Left Ear */}
+          {/* Left Cat Ear (Perky triangular cat ear matching user screenshot) */}
           <path
-            d="M 112 110 C 95 65 85 45 80 50 C 75 55 90 95 105 130 Z"
+            d="M 102 118 C 96 100 86 78 78 62 C 94 68 122 84 138 98 Z"
             fill="url(#bodyGrad)"
           />
           <path
-            d="M 108 105 C 96 72 88 58 85 62 C 82 66 93 96 103 120 Z"
+            d="M 102 112 C 96 98 88 78 82 68 C 94 73 116 86 130 96 Z"
             fill="url(#earGrad)"
-            opacity="0.9"
+            opacity="0.95"
           />
 
-          {/* Right Ear */}
+          {/* Right Cat Ear (Perky triangular cat ear matching user screenshot) */}
           <path
-            d="M 208 110 C 225 65 235 45 240 50 C 245 55 230 95 215 130 Z"
+            d="M 218 118 C 224 100 234 78 242 62 C 226 68 198 84 182 98 Z"
             fill="url(#bodyGrad)"
           />
           <path
-            d="M 212 105 C 224 72 232 58 235 62 C 238 66 227 96 217 120 Z"
+            d="M 218 112 C 224 98 232 78 238 68 C 226 73 204 86 190 96 Z"
             fill="url(#earGrad)"
-            opacity="0.9"
+            opacity="0.95"
           />
 
           {/* Back Body / Tail Hint */}
