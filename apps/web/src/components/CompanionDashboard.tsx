@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import CompanionAvatar from './CompanionAvatar';
+import Companion3DView from './Companion3DView';
 import { sounds } from '../lib/sound';
 import { ElementType } from './InvocationModal';
 
@@ -59,6 +60,7 @@ export default function CompanionDashboard({
 
   // Active view tab
   const [activeTab, setActiveTab] = useState<'chat' | 'memory' | 'blockchain'>('chat');
+  const [avatarMode, setAvatarMode] = useState<'3d' | '2d'>('3d');
 
   // Chat conversation
   const [messages, setMessages] = useState<Message[]>([
@@ -373,9 +375,41 @@ export default function CompanionDashboard({
             </div>
           </div>
 
-          {/* Companion Centerstage Avatar */}
-          <div className="my-2 cursor-pointer" onClick={handleFeed} title="Clique pour interagir !">
-            <CompanionAvatar element={companion.element} size="lg" />
+          {/* Companion Centerstage Avatar (3D WebGL or 2D Vector) */}
+          <div className="relative w-full h-[320px] flex items-center justify-center my-2 select-none">
+            {avatarMode === '3d' ? (
+              <div className="w-full h-full relative">
+                <Companion3DView
+                  element={companion.element}
+                  interactive={true}
+                  onMascotClick={handleFeed}
+                />
+              </div>
+            ) : (
+              <div onClick={handleFeed} className="cursor-pointer" title="Clique pour interagir !">
+                <CompanionAvatar element={companion.element} size="lg" />
+              </div>
+            )}
+            
+            {/* 3D / 2D Switcher */}
+            <div className="absolute bottom-1 right-2 z-20 flex bg-black/70 backdrop-blur-md rounded-full border border-cyan-800/50 p-0.5 text-[10px]">
+              <button
+                onClick={() => setAvatarMode('3d')}
+                className={`px-2 py-0.5 rounded-full transition-all ${
+                  avatarMode === '3d' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-300/80 hover:text-white'
+                }`}
+              >
+                3D WebGL
+              </button>
+              <button
+                onClick={() => setAvatarMode('2d')}
+                className={`px-2 py-0.5 rounded-full transition-all ${
+                  avatarMode === '2d' ? 'bg-cyan-500 text-black font-bold' : 'text-cyan-300/80 hover:text-white'
+                }`}
+              >
+                2D
+              </button>
+            </div>
           </div>
 
           <h1 className="text-3xl font-extrabold text-white mt-1 mb-1 tracking-wide">
