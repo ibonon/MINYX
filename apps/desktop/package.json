@@ -1,0 +1,29 @@
+{
+  "name": "@minyx/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "lint": "eslint . --ext .ts,.tsx",
+    "clean": "rm -rf dist src-tauri/target"
+  },
+  "dependencies": {
+    "@minyx/core": "workspace:*",
+    "@minyx/ui": "workspace:*",
+    "@minyx/api": "workspace:*",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "framer-motion": "^11.3.0",
+    "zustand": "^5.0.0",
+    "@tanstack/react-query": "^5.51.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@tauri-apps/api": "^2.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0"
+  }
+}
