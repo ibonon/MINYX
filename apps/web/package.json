@@ -10,10 +10,10 @@
     "clean": "rm -rf .next dist"
   },
   "dependencies": {
-    "@minyx/core": "workspace:*",
-    "@minyx/ui": "workspace:*",
-    "@minyx/api": "workspace:*",
-    "@minyx/blockchain": "workspace:*",
+    "@minyx/core": "*",
+    "@minyx/ui": "*",
+    "@minyx/api": "*",
+    "@minyx/blockchain": "*",
     "next": "15.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",

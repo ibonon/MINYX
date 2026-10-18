@@ -9,9 +9,9 @@
     "clean": "rm -rf dist src-tauri/target"
   },
   "dependencies": {
-    "@minyx/core": "workspace:*",
-    "@minyx/ui": "workspace:*",
-    "@minyx/api": "workspace:*",
+    "@minyx/core": "*",
+    "@minyx/ui": "*",
+    "@minyx/api": "*",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "framer-motion": "^11.3.0",
