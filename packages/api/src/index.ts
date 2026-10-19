@@ -69,3 +69,10 @@ export async function getMemories(companionId: string): Promise<Memory[]> {
   if (!res.ok) throw new Error(`MemoClaw get error: ${res.status}`);
   return res.json();
 }
+
+// ── Meta Hackathon Native Stack ─────────────────────────────
+export * from './tools';
+export * from './memoclaw_sqlite';
+export * from './meta_muse';
+export * from './meta_llama';
+
