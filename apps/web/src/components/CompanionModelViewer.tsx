@@ -33,8 +33,8 @@ export default function CompanionModelViewer({
     // --- 1. Scene, Camera, Renderer ---
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 0.3, 5.8);
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(0, 0.2, 5.0);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -48,62 +48,28 @@ export default function CompanionModelViewer({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
-    // --- 2. Lighting Setup (Cinematic Cyan & Rim Light) ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    // --- 2. Lighting Setup (Cyan Bioluminescent Glow & Rim Lighting) ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0x7dd3fc, 3.0);
-    keyLight.position.set(4, 5, 5);
+    const keyLight = new THREE.DirectionalLight(0x7dd3fc, 3.2);
+    keyLight.position.set(3, 4, 4);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x00f0ff, 4.0);
-    rimLight.position.set(-4, -2, -3);
+    const rimLight = new THREE.DirectionalLight(0x00f0ff, 4.5);
+    rimLight.position.set(-3.5, 1.5, -3);
     scene.add(rimLight);
 
-    const floorLight = new THREE.PointLight(0x38bdf8, 3.5, 8);
-    floorLight.position.set(0, -1.8, 1);
+    const chestEmblemLight = new THREE.PointLight(0x38bdf8, 4.0, 6);
+    chestEmblemLight.position.set(0, -0.2, 1.2);
+    scene.add(chestEmblemLight);
+
+    // Floor glow light
+    const floorLight = new THREE.PointLight(0x00d4ff, 3.5, 7);
+    floorLight.position.set(0, -1.8, 0.5);
     scene.add(floorLight);
 
-    // --- 3. Concentric Energy Rings on the Floor (Exact match to concept art) ---
-    const floorGroup = new THREE.Group();
-    floorGroup.position.set(0, -1.85, 0);
-
-    const ring1Geo = new THREE.TorusGeometry(1.85, 0.02, 16, 64);
-    const ring1Mat = new THREE.MeshBasicMaterial({
-      color: 0x00d2ff,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending,
-    });
-    const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
-    ring1.rotation.x = Math.PI / 2;
-    floorGroup.add(ring1);
-
-    const ring2Geo = new THREE.TorusGeometry(1.3, 0.025, 16, 64);
-    const ring2Mat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-    });
-    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
-    ring2.rotation.x = Math.PI / 2;
-    floorGroup.add(ring2);
-
-    const ring3Geo = new THREE.TorusGeometry(0.8, 0.035, 16, 48);
-    const ring3Mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 1.0,
-      blending: THREE.AdditiveBlending,
-    });
-    const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
-    ring3.rotation.x = Math.PI / 2;
-    floorGroup.add(ring3);
-
-    scene.add(floorGroup);
-
-    // --- 4. GLTF / GLB Loader ---
+    // --- 3. GLTF / GLB Loader ---
     let mixer: THREE.AnimationMixer | null = null;
     let modelGroup: THREE.Group | null = null;
 
@@ -122,15 +88,15 @@ export default function CompanionModelViewer({
         const center = box.getCenter(new THREE.Vector3());
 
         const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 2.6 / (maxDim || 1);
-        modelGroup.scale.set(scale, scale, scale);
+        const targetScale = 3.2 / (maxDim || 1);
+        modelGroup.scale.set(targetScale, targetScale, targetScale);
 
-        // Center on floor platform
-        modelGroup.position.x = -center.x * scale;
-        modelGroup.position.y = -box.min.y * scale - 1.8;
-        modelGroup.position.z = -center.z * scale;
+        // Center vertically & horizontally
+        modelGroup.position.x = -center.x * targetScale;
+        modelGroup.position.y = -center.y * targetScale - 0.05;
+        modelGroup.position.z = -center.z * targetScale;
 
-        // Traverse & tune materials for holographic glow
+        // Traverse & tune materials for holographic bioluminescent brilliance
         modelGroup.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             const mesh = child as THREE.Mesh;
@@ -138,16 +104,19 @@ export default function CompanionModelViewer({
             mesh.receiveShadow = true;
             if (mesh.material) {
               const mat = mesh.material as THREE.MeshStandardMaterial;
-              mat.roughness = Math.min(mat.roughness, 0.3);
-              if (!mat.emissive || mat.emissive.getHex() === 0) {
-                mat.emissive = new THREE.Color(0x004466);
-                mat.emissiveIntensity = 0.4;
+              mat.roughness = Math.min(mat.roughness, 0.25);
+              if (mesh.name.includes('Emblem') || mesh.name.includes('Drop')) {
+                mat.emissive = new THREE.Color(0x38bdf8);
+                mat.emissiveIntensity = 1.6;
+              } else if (mesh.name.includes('Catchlight')) {
+                mat.emissive = new THREE.Color(0xffffff);
+                mat.emissiveIntensity = 1.0;
               }
             }
           }
         });
 
-        // Animations support
+        // Embedded animations if present
         if (gltf.animations && gltf.animations.length > 0) {
           mixer = new THREE.AnimationMixer(modelGroup);
           const action = mixer.clipAction(gltf.animations[0]);
@@ -159,13 +128,12 @@ export default function CompanionModelViewer({
       },
       undefined,
       (error) => {
-        // Model file not yet present in public/models/
         setIsLoading(false);
         setLoadError(true);
       }
     );
 
-    // --- 5. Mouse Parallax & Animation Loop ---
+    // --- 4. Interactive Mouse Parallax & Breathing Animation Loop ---
     let mouseX = 0;
     let mouseY = 0;
     let targetRotationY = 0;
@@ -190,29 +158,21 @@ export default function CompanionModelViewer({
       const delta = clock.getDelta();
       const elapsedTime = clock.getElapsedTime();
 
-      // Ring rotations & pulsing
-      ring1.rotation.z += 0.3 * delta;
-      ring2.rotation.z -= 0.45 * delta;
-      ring3.rotation.z += 0.7 * delta;
-
-      const ringPulse = 1.0 + Math.sin(elapsedTime * 2.5) * 0.035;
-      ring1.scale.set(ringPulse, ringPulse, 1);
-
       // Animation mixer update
       if (mixer) {
         mixer.update(delta);
       }
 
-      // Model idle hovering & mouse parallax
+      // Smooth floating breathing & mouse tracking
       if (modelGroup) {
-        const floatY = Math.sin(elapsedTime * 1.8) * 0.08;
-        modelGroup.position.y += floatY * delta * 2.0;
+        const floatY = Math.sin(elapsedTime * 2.0) * 0.05;
+        modelGroup.position.y += floatY * delta * 1.5;
 
         if (interactive) {
-          targetRotationY = mouseX * 0.4;
-          targetRotationX = -mouseY * 0.2;
-          modelGroup.rotation.y += (targetRotationY - modelGroup.rotation.y) * 0.08;
-          modelGroup.rotation.x += (targetRotationX - modelGroup.rotation.x) * 0.08;
+          targetRotationY = mouseX * 0.45;
+          targetRotationX = -mouseY * 0.25;
+          modelGroup.rotation.y += (targetRotationY - modelGroup.rotation.y) * 0.07;
+          modelGroup.rotation.x += (targetRotationX - modelGroup.rotation.x) * 0.07;
         }
       }
 
@@ -238,9 +198,6 @@ export default function CompanionModelViewer({
       window.removeEventListener('resize', handleResize);
 
       renderer.dispose();
-      ring1Geo.dispose();
-      ring2Geo.dispose();
-      ring3Geo.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
@@ -249,31 +206,20 @@ export default function CompanionModelViewer({
 
   return (
     <div className={`relative w-full h-full ${className}`}>
-      <div ref={mountRef} className="w-full h-full select-none" />
+      <div ref={mountRef} className="w-full h-full select-none cursor-grab active:cursor-grabbing" />
 
-      {/* Model Loader Status Notification / Drop-in Guide */}
-      {loadError && (
-        <div className="absolute inset-x-4 bottom-4 z-20 pointer-events-auto flex items-center justify-between p-3 rounded-2xl bg-[#040e1b]/90 border border-cyan-500/40 backdrop-blur-md shadow-xl text-left">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">📁</span>
-            <div>
-              <div className="text-xs font-bold text-cyan-300 font-share-tech">
-                PRÊT POUR TON FICHIER 3D .GLB
-              </div>
-              <div className="text-[11px] text-gray-400">
-                Dépose ton modèle 3D dans <span className="font-mono text-white">apps/web/public/models/companion.glb</span>
-              </div>
-            </div>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-1 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
-            GLTF / GLB READY
+      {isLoading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          <span className="mt-3 text-xs font-share-tech text-cyan-300 animate-pulse">
+            Chargement du modèle 3D .GLB...
           </span>
         </div>
       )}
 
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      {loadError && (
+        <div className="absolute inset-x-4 bottom-4 z-20 pointer-events-auto p-3.5 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-xs text-cyan-200">
+          Impossible de charger le fichier .glb. Vérifie qu'il est présent dans public/models/companion.glb.
         </div>
       )}
     </div>

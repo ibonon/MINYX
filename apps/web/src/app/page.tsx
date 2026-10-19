@@ -2,11 +2,24 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import CosmicBackground from '../components/CosmicBackground';
 import InvocationModal, { InvocationResult } from '../components/InvocationModal';
 import MemoClawModal from '../components/MemoClawModal';
 import MetaDemoFlow from '../components/MetaDemoFlow';
 import { sounds } from '../lib/sound';
+
+const CompanionModelViewer = dynamic(() => import('../components/CompanionModelViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      <div className="w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      <span className="mt-3 text-xs font-share-tech text-cyan-300 animate-pulse">
+        Chargement du modèle 3D .GLB...
+      </span>
+    </div>
+  ),
+});
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<'landing' | 'demo'>('landing');
@@ -144,37 +157,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right: Muse Image Generated Companion with SAM 3.1 Energy Rings */}
-          <div className="md:col-span-6 flex items-center justify-center relative">
-            <div 
-              className="relative w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-3xl overflow-hidden border border-cyan-500/40 shadow-[0_0_50px_rgba(56,189,248,0.3)] bg-black/60 cursor-pointer group"
-              onClick={() => {
-                sounds.playCompanionVoice('Eau');
-              }}
-              title="Clique pour entendre la voix de ton compagnon !"
-            >
-              {/* Exact reference artwork */}
-              <Image
-                src="/hero-bg.jpg"
-                alt="Minyx Muse Image Generated Companion"
-                fill
-                priority
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-
-              {/* SAM 3.1 Concentric Energy Rings */}
-              <div 
-                className="absolute inset-x-8 bottom-3 h-14 pointer-events-none rounded-full border-2 border-cyan-300/80 animate-pulse"
-                style={{
-                  transform: 'rotateX(72deg)',
-                  boxShadow: '0 0 25px rgba(56, 189, 248, 0.9), inset 0 0 15px rgba(56, 189, 248, 0.6)'
-                }}
-              />
-
-              <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/70 border border-cyan-400/50 text-[10px] font-mono text-cyan-300">
-                MUSE IMAGE
-              </div>
-            </div>
+          {/* Right: Real Interactive 3D Model (.GLB) matching reference */}
+          <div className="md:col-span-6 flex items-center justify-center relative h-[320px] sm:h-[380px] md:h-[440px] w-full">
+            <CompanionModelViewer
+              modelUrl="/models/companion.glb"
+              element="Eau"
+              interactive={true}
+            />
           </div>
 
         </div>
