@@ -69,6 +69,43 @@ export default function CompanionModelViewer({
     floorLight.position.set(0, -1.8, 0.5);
     scene.add(floorLight);
 
+    // --- 2.1 Holographic Neon Rings Pedestal (Matching reference image) ---
+    const floorGroup = new THREE.Group();
+    floorGroup.position.set(0, -1.55, 0);
+    floorGroup.rotation.x = Math.PI / 2;
+
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const innerRingMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.65,
+    });
+
+    const outerRing = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.016, 16, 64), ringMat);
+    const middleRing = new THREE.Mesh(new THREE.TorusGeometry(1.30, 0.014, 16, 64), innerRingMat);
+    const centerRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.012, 16, 48), ringMat);
+    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(0.60, 0.010, 16, 36), innerRingMat);
+
+    floorGroup.add(outerRing);
+    floorGroup.add(middleRing);
+    floorGroup.add(centerRing);
+    floorGroup.add(innerRing);
+
+    // Glowing orbital node dots
+    const dotGeo = new THREE.SphereGeometry(0.04, 12, 12);
+    const dotMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    for (let i = 0; i < 4; i++) {
+      const angle = (i * Math.PI) / 2;
+      const dot = new THREE.Mesh(dotGeo, dotMat);
+      dot.position.set(Math.cos(angle) * 1.65, Math.sin(angle) * 1.65, 0);
+      floorGroup.add(dot);
+    }
+    scene.add(floorGroup);
+
     // --- 3. GLTF / GLB Loader ---
     let mixer: THREE.AnimationMixer | null = null;
     let modelGroup: THREE.Group | null = null;
@@ -88,10 +125,10 @@ export default function CompanionModelViewer({
         const center = box.getCenter(new THREE.Vector3());
 
         const maxDim = Math.max(size.x, size.y, size.z);
-        const targetScale = 3.2 / (maxDim || 1);
+        const targetScale = 3.1 / (maxDim || 1);
         modelGroup.scale.set(targetScale, targetScale, targetScale);
 
-        // Center vertically & horizontally
+        // Center vertically & horizontally above floor rings
         modelGroup.position.x = -center.x * targetScale;
         modelGroup.position.y = -center.y * targetScale - 0.05;
         modelGroup.position.z = -center.z * targetScale;
@@ -104,10 +141,19 @@ export default function CompanionModelViewer({
             mesh.receiveShadow = true;
             if (mesh.material) {
               const mat = mesh.material as THREE.MeshStandardMaterial;
-              mat.roughness = Math.min(mat.roughness, 0.25);
+              // If material has no texture map, give it the radiant water-spirit bioluminescent styling
+              if (!mat.map) {
+                mat.color = new THREE.Color(0x38bdf8);
+                mat.emissive = new THREE.Color(0x0284c7);
+                mat.emissiveIntensity = 0.50;
+                mat.roughness = 0.20;
+                mat.metalness = 0.06;
+              } else {
+                mat.roughness = Math.min(mat.roughness, 0.25);
+              }
               if (mesh.name.includes('Emblem') || mesh.name.includes('Drop')) {
                 mat.emissive = new THREE.Color(0x38bdf8);
-                mat.emissiveIntensity = 1.6;
+                mat.emissiveIntensity = 1.8;
               } else if (mesh.name.includes('Catchlight')) {
                 mat.emissive = new THREE.Color(0xffffff);
                 mat.emissiveIntensity = 1.0;
@@ -133,13 +179,30 @@ export default function CompanionModelViewer({
       }
     );
 
-    // --- 4. Interactive Mouse Parallax & Breathing Animation Loop ---
+    // --- 4. Interactive Mouse Drag-to-Rotate & Floating Animation Loop ---
+    let isDragging = false;
+    let prevMouseX = 0;
+    let manualRotY = 0;
     let mouseX = 0;
     let mouseY = 0;
     let targetRotationY = 0;
     let targetRotationX = 0;
 
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+    };
+
     const handleMouseMove = (event: MouseEvent) => {
+      if (isDragging) {
+        const delta = event.clientX - prevMouseX;
+        manualRotY += delta * 0.012;
+        prevMouseX = event.clientX;
+      }
       if (!interactive) return;
       const rect = container.getBoundingClientRect();
       const normX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -148,6 +211,8 @@ export default function CompanionModelViewer({
       mouseY = normY;
     };
 
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('mousemove', handleMouseMove);
 
     let animationFrameId: number;
@@ -157,6 +222,9 @@ export default function CompanionModelViewer({
       animationFrameId = requestAnimationFrame(animate);
       const delta = clock.getDelta();
       const elapsedTime = clock.getElapsedTime();
+
+      // Slowly rotate holographic floor platform
+      floorGroup.rotation.z += delta * 0.25;
 
       // Animation mixer update
       if (mixer) {
@@ -169,10 +237,10 @@ export default function CompanionModelViewer({
         modelGroup.position.y += floatY * delta * 1.5;
 
         if (interactive) {
-          targetRotationY = mouseX * 0.45;
-          targetRotationX = -mouseY * 0.25;
-          modelGroup.rotation.y += (targetRotationY - modelGroup.rotation.y) * 0.07;
-          modelGroup.rotation.x += (targetRotationX - modelGroup.rotation.x) * 0.07;
+          targetRotationY = manualRotY + mouseX * 0.40;
+          targetRotationX = -mouseY * 0.20;
+          modelGroup.rotation.y += (targetRotationY - modelGroup.rotation.y) * 0.08;
+          modelGroup.rotation.x += (targetRotationX - modelGroup.rotation.x) * 0.08;
         }
       }
 
@@ -194,6 +262,8 @@ export default function CompanionModelViewer({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
 
