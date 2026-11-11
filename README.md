@@ -2,49 +2,44 @@
 
 > *"Ton compagnon IA qui grandit avec toi… et que tu possèdes vraiment."*
 
-**MINYX** is the first emotional AI companion platform combining:
+**MINYX** is an emotional AI companion platform combining:
 
-- 🧠 **Cumulative memory** — MemoClaw remembers every interaction and builds a real relationship over months
-- ⚔️ **RPG evolution** — Visual, auditory, and behavioral changes as your companion levels up
-- 🔗 **True ownership** — Each companion is an ERC-721 NFT on Base L2 — transferable and resaleable
-- 🤖 **Agentic layer** — Your companion doesn't just talk, it acts in your world (with your permission)
-- 🧬 **Auto-improvement** — OpenClaw-RL adapts your companion based on your interaction patterns
+- 🧠 **Cumulative memory** — MemoClaw remembers interactions and builds context over time
+- ⚔️ **RPG evolution** — Visual and behavioral changes as your companion levels up
+- 🔗 **True ownership** — Companions mapped to an ERC-721 contract on Base L2 (adapter in `packages/blockchain`)
+- 🤖 **Agentic layer** — The companion can call tools (reminders, web search) through the Meta Model API tool-calling loop
 
 ---
 
 ## Architecture
 
 ```
-MINYX Monorepo (Turborepo + pnpm)
+MINYX Monorepo (Turborepo + npm workspaces)
 ├── apps/
-│   ├── web/          # Next.js 15 + React 19 — Main web app
-│   ├── mobile/       # Expo React Native — iOS/Android
-│   └── desktop/      # Tauri — Windows/macOS/Linux desktop
-├── packages/
-│   ├── ui/           # Shared UI components (React + RN)
-│   ├── core/         # Business logic: XP, stats, evolution engine
-│   ├── api/          # OpenClaw & MemoClaw client SDK
-│   └── blockchain/   # Wagmi v2 + Viem + RainbowKit helpers
-└── services/
-    ├── gateway/      # OpenClaw Gateway (FastAPI + Docker)
-    ├── memory/       # MemoClaw memory service (Qdrant + PG)
-    ├── rl/           # OpenClaw-RL reinforcement learning service
-    └── agentic/      # Agentic Layer — tool execution engine
+│   ├── web/          # Next.js 15 + React 19 — main app & HTTP API (route handlers)
+│   └── mobile/       # Expo / React Native — mobile shell
+└── packages/
+    ├── ui/           # Shared UI components (React)
+    ├── core/         # Business logic: XP, stats, evolution engine
+    ├── api/          # Prisma data layer + Meta Model API client + tools (MemoClaw)
+    └── blockchain/   # Wagmi v2 + Viem + RainbowKit helpers (ERC-721)
 ```
+
+The HTTP API is served by **Next.js route handlers** under `apps/web/src/app/api/**`. There is no separate gateway/microservice tier.
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Web frontend | Next.js 15, React 19, Framer Motion, Tailwind, shadcn/ui |
-| Mobile | Expo SDK 52, React Native, Reanimated 3 |
-| Desktop | Tauri 2, Rust |
+| Web frontend | Next.js 15 (App Router), React 19, Framer Motion, Tailwind, Three.js / react-three-fiber |
+| Mobile | Expo SDK 57, React Native 0.86 |
 | State management | Zustand + TanStack Query |
 | Blockchain | Base L2, ERC-721, Wagmi v2, Viem, RainbowKit |
-| AI Core | Qwen2.5-7B (local) + Claude (fallback) |
-| Memory | Qdrant (vector) + PostgreSQL + Redis |
-| Services | FastAPI, Docker, Railway → Fly.io |
-| Monorepo | Turborepo + pnpm workspaces |
+| AI Core | Meta Model API (OpenAI-compatible) + deterministic scripted fallback |
+| Memory | SQLite (dev) / PostgreSQL + pgvector (prod) via Prisma |
+| Auth | Session JWT (jose) with server-side revocation, bcrypt password hashing |
+| Delivery | Docker (multi-stage, Next.js `standalone`) + docker-compose |
+| Monorepo | Turborepo + npm workspaces |
 
 ## 7 Elements
 
@@ -56,14 +51,35 @@ Each companion belongs to one of 7 elements, each with a unique personality syst
 
 ```bash
 # Install dependencies
-pnpm install
+npm install
 
-# Run all apps in dev mode
-pnpm dev
+# Local database (SQLite) — generate Prisma client + apply migrations
+npx prisma generate --schema packages/api/prisma/schema.prisma
+npx prisma migrate dev --schema packages/api/prisma/schema.prisma
+
+# Run the web app in dev mode
+npm run dev
 
 # Build everything
-pnpm build
+npm run build
+
+# Lint
+npm run lint
+
+# Test
+npm run test
 ```
+
+Copy `.env.example` to `.env` and fill in the required values before running.
+
+## Production (Docker)
+
+```bash
+docker compose up --build
+```
+
+The compose file builds the web image (`runner` target) and runs a one-shot
+`migrate` job (PostgreSQL + pgvector) before the app starts.
 
 ## Project Status
 
