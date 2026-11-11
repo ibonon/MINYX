@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { ChatMessage } from '../types';
 import { minyxMobile } from '../services/minyxEngine';
+import { colors, radius, spacing } from '../theme';
 
 interface ChatScreenProps {
   initialPrompt?: string;
@@ -68,13 +69,17 @@ export default function ChatScreen({ initialPrompt }: ChatScreenProps) {
       style={styles.container}
       keyboardVerticalOffset={80}
     >
-      {/* Top MemoClaw indicator */}
-      <View style={styles.memoryIndicator}>
-        <View style={styles.memoryDot} />
-        <Text style={styles.memoryText}>MemoClaw actif • 5 souvenirs injectés dans Llama 3.3</Text>
+      <View style={styles.topPanel}>
+        <View style={styles.memoryIndicator}>
+          <View style={styles.memoryDot} />
+          <Text style={styles.memoryText}>MemoClaw actif</Text>
+        </View>
+        <Text style={styles.topTitle}>Conversation avec Kael</Text>
+        <Text style={styles.topSubtitle}>
+          Une interface plus simple, centrée sur l'échange et les actions utiles.
+        </Text>
       </View>
 
-      {/* Messages Feed */}
       <ScrollView
         ref={scrollRef}
         style={styles.messagesList}
@@ -87,9 +92,10 @@ export default function ChatScreen({ initialPrompt }: ChatScreenProps) {
               key={msg.id}
               style={[styles.messageBubble, isUser ? styles.userBubble : styles.companionBubble]}
             >
-              <Text style={styles.senderHeader}>
-                {isUser ? 'Vous' : '💧 Kael (Esprit de l\'Eau)'} • {msg.timestamp}
-              </Text>
+              <View style={styles.bubbleMeta}>
+                <Text style={styles.senderHeader}>{isUser ? 'Vous' : 'Kael'}</Text>
+                <Text style={styles.timestampText}>{msg.timestamp}</Text>
+              </View>
               <Text style={styles.messageText}>{msg.text}</Text>
 
               {/* Tool Execution Card (Meta Llama Tool Call) */}
@@ -137,7 +143,6 @@ export default function ChatScreen({ initialPrompt }: ChatScreenProps) {
         )}
       </ScrollView>
 
-      {/* Input Bar */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -165,69 +170,98 @@ export default function ChatScreen({ initialPrompt }: ChatScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#030712',
+    backgroundColor: colors.bg,
+  },
+  topPanel: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: 12,
+    gap: 6,
   },
   memoryIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(8, 47, 73, 0.4)',
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(56, 189, 248, 0.2)',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primarySoft,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
   },
   memoryDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#00f0ff',
+    backgroundColor: colors.primary,
     marginRight: 6,
   },
   memoryText: {
-    color: '#7dd3fc',
+    color: colors.primary,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  topTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  topSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
   },
   messagesList: {
     flex: 1,
   },
   messagesContent: {
-    padding: 16,
+    paddingHorizontal: spacing.md,
     paddingBottom: 24,
   },
   messageBubble: {
     maxWidth: '85%',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 14,
     marginBottom: 14,
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: '#0284c7',
-    borderBottomRightRadius: 4,
+    backgroundColor: colors.primary,
+    borderBottomRightRadius: 8,
   },
   companionBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
-    borderBottomLeftRadius: 4,
+    borderColor: colors.border,
+    borderBottomLeftRadius: 8,
+  },
+  bubbleMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 6,
   },
   senderHeader: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: 4,
+    color: 'rgba(255, 255, 255, 0.72)',
     fontWeight: '600',
     textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  timestampText: {
+    color: 'rgba(255, 255, 255, 0.54)',
+    fontSize: 10,
   },
   messageText: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#f8fafc',
+    color: colors.text,
   },
   toolCard: {
     marginTop: 10,
-    backgroundColor: 'rgba(2, 44, 34, 0.5)',
+    backgroundColor: colors.successSoft,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.4)',
@@ -245,13 +279,13 @@ const styles = StyleSheet.create({
   toolTitle: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#34d399',
+    color: colors.success,
     letterSpacing: 0.5,
   },
   toolSummary: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#a7f3d0',
+    color: colors.text,
     marginTop: 2,
   },
   toolDetails: {
@@ -271,7 +305,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   thinkingText: {
-    color: '#7dd3fc',
+    color: colors.primary,
     fontSize: 12,
     marginLeft: 8,
     fontStyle: 'italic',
@@ -280,35 +314,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    backgroundColor: colors.surfaceStrong,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(56, 189, 248, 0.25)',
+    borderTopColor: colors.border,
+    gap: 10,
   },
   input: {
     flex: 1,
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    borderRadius: 22,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    color: '#f8fafc',
+    color: colors.text,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
-    marginRight: 10,
+    borderColor: colors.border,
   },
   sendButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#0284c7',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: 'rgba(2, 132, 199, 0.3)',
+    backgroundColor: 'rgba(56, 189, 248, 0.3)',
   },
   sendIcon: {
-    color: '#ffffff',
+    color: '#04111d',
     fontSize: 16,
     marginLeft: 2,
   },

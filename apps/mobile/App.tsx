@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, LogBox } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { registerRootComponent } from 'expo';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+LogBox.ignoreAllLogs(true);
 import Header from './src/components/Header';
 import BottomTabBar, { TabKey } from './src/components/BottomTabBar';
 import HomeScreen from './src/screens/HomeScreen';
@@ -18,9 +22,10 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <Header />
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <Header />
 
       <View style={styles.screenContainer}>
         {currentTab === 'home' && (
@@ -38,8 +43,9 @@ export default function App() {
         {currentTab === 'evolution' && <EvolutionScreen />}
       </View>
 
-      <BottomTabBar currentTab={currentTab} onSelectTab={setCurrentTab} />
-    </View>
+        <BottomTabBar currentTab={currentTab} onSelectTab={setCurrentTab} />
+      </View>
+    </SafeAreaProvider>
   );
 }
 
@@ -52,3 +58,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+registerRootComponent(App);

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { MemoryNamespace, MemoryRecord } from '../types';
 import { minyxMobile } from '../services/minyxEngine';
+import { colors, radius, shadow, spacing } from '../theme';
 
 export default function MemoClawScreen() {
   const [selectedNamespace, setSelectedNamespace] = useState<MemoryNamespace | 'all'>('all');
@@ -33,7 +34,7 @@ export default function MemoClawScreen() {
 
   const handleAddMemory = () => {
     if (!newKey.trim() || !newValue.trim()) return;
-    const created = minyxMobile.addMemory(newNamespace, newKey.trim(), newValue.trim());
+    minyxMobile.addMemory(newNamespace, newKey.trim(), newValue.trim());
     setMemories(minyxMobile.getMemories());
     setNewKey('');
     setNewValue('');
@@ -55,14 +56,13 @@ export default function MemoClawScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Info */}
       <View style={styles.header}>
-        <Text style={styles.title}>MemoClaw</Text>
+        <Text style={styles.eyebrow}>MemoClaw</Text>
+        <Text style={styles.title}>Memoire persistante</Text>
         <Text style={styles.subtitle}>
-          Système de mémoire cognitive persistante en 4 espaces
+          Retrouve les faits, preferences et evenements retenus par le compagnon.
         </Text>
 
-        {/* Search Input */}
         <TextInput
           style={styles.searchInput}
           placeholder="Rechercher un souvenir ou un fait..."
@@ -71,7 +71,6 @@ export default function MemoClawScreen() {
           onChangeText={setSearchQuery}
         />
 
-        {/* Filter Pills */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
           {(['all', 'core', 'events', 'preferences', 'moods'] as const).map((ns) => {
             const isSelected = selectedNamespace === ns;
@@ -98,7 +97,6 @@ export default function MemoClawScreen() {
         </ScrollView>
       </View>
 
-      {/* Memory Cards Feed */}
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {filtered.map((item) => {
           const badge = getNamespaceBadge(item.namespace);
@@ -127,7 +125,6 @@ export default function MemoClawScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Add Memory Button */}
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.8}
@@ -136,7 +133,6 @@ export default function MemoClawScreen() {
         <Text style={styles.fabText}>+ Ajouter un fait</Text>
       </TouchableOpacity>
 
-      {/* Modal Add Memory */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -207,74 +203,78 @@ export default function MemoClawScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#030712',
+    backgroundColor: colors.bg,
   },
   header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(56, 189, 248, 0.2)',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    padding: spacing.md,
+    gap: 8,
+    backgroundColor: colors.bg,
+  },
+  eyebrow: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#38bdf8',
-    letterSpacing: 0.5,
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 2,
-    marginBottom: 12,
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
   searchInput: {
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 9,
-    color: '#f8fafc',
+    paddingVertical: 12,
+    color: colors.text,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderColor: colors.border,
   },
   filterScroll: {
-    marginTop: 12,
+    marginTop: 4,
     flexDirection: 'row',
   },
   filterPill: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   filterPillActive: {
-    backgroundColor: 'rgba(2, 132, 199, 0.3)',
-    borderColor: '#38bdf8',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.borderStrong,
   },
   filterText: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textMuted,
     fontWeight: '600',
   },
   filterTextActive: {
-    color: '#38bdf8',
+    color: colors.primary,
     fontWeight: '700',
   },
   list: {
     flex: 1,
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 80,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 92,
   },
   card: {
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -296,12 +296,12 @@ const styles = StyleSheet.create({
   },
   confidenceText: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textFaint,
     fontWeight: '600',
   },
   keyText: {
     fontSize: 11,
-    color: '#38bdf8',
+    color: colors.primary,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -309,39 +309,39 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontSize: 14,
-    color: '#f8fafc',
+    color: colors.text,
     lineHeight: 20,
     fontWeight: '500',
   },
   timestampText: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textFaint,
     marginTop: 8,
   },
   emptyContainer: {
     paddingVertical: 40,
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   emptyText: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 13,
   },
   fab: {
     position: 'absolute',
     bottom: 20,
     alignSelf: 'center',
-    backgroundColor: '#0284c7',
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 25,
-    shadowColor: '#38bdf8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 5,
+    borderRadius: radius.pill,
+    ...shadow.glow,
   },
   fabText: {
-    color: '#ffffff',
+    color: '#04111d',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -353,22 +353,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderColor: colors.borderStrong,
     padding: 20,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: colors.text,
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#7dd3fc',
+    color: colors.primary,
     marginTop: 10,
     marginBottom: 4,
     letterSpacing: 0.5,
@@ -381,34 +381,34 @@ const styles = StyleSheet.create({
   modalNsBtn: {
     flex: 1,
     paddingVertical: 6,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   modalNsBtnActive: {
-    borderColor: '#38bdf8',
-    backgroundColor: 'rgba(2, 132, 199, 0.3)',
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.primarySoft,
   },
   modalNsText: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textMuted,
     fontWeight: '600',
   },
   modalNsTextActive: {
-    color: '#38bdf8',
+    color: colors.primary,
     fontWeight: '700',
   },
   modalInput: {
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    color: '#f8fafc',
+    color: colors.text,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
+    borderColor: colors.border,
   },
   modalInputMulti: {
     height: 70,
@@ -425,18 +425,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   cancelText: {
-    color: '#94a3b8',
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: '600',
   },
   confirmBtn: {
-    backgroundColor: '#0284c7',
+    backgroundColor: colors.primary,
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 10,
   },
   confirmText: {
-    color: '#ffffff',
+    color: '#04111d',
     fontSize: 13,
     fontWeight: '700',
   },

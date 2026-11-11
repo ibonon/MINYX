@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Companion3DView from '../components/Companion3DView';
 import { minyxMobile } from '../services/minyxEngine';
+import { colors, radius, shadow, spacing } from '../theme';
 
 interface HomeScreenProps {
   onNavigateToChat: (initialPrompt?: string) => void;
@@ -18,25 +19,30 @@ export default function HomeScreen({
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 3D Mascot Interactive Sanctuary */}
-      <View style={styles.mascotWrapper}>
+      <View style={styles.heroCard}>
         <Companion3DView element={companion.element} />
       </View>
 
-      {/* Identity & Element Header */}
       <View style={styles.identityCard}>
-        <View style={styles.nameRow}>
-          <Text style={styles.companionName}>{companion.name}</Text>
-          <View style={styles.elementBadge}>
-            <Text style={styles.elementText}>💧 {companion.element}</Text>
+        <View style={styles.identityHeader}>
+          <View style={styles.identityCopy}>
+            <View style={styles.nameRow}>
+              <Text style={styles.companionName}>{companion.name}</Text>
+              <View style={styles.elementBadge}>
+                <Text style={styles.elementText}>{companion.element}</Text>
+              </View>
+            </View>
+            <Text style={styles.moodText}>Humeur du moment : {companion.mood}</Text>
+          </View>
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelBadgeLabel}>Niveau</Text>
+            <Text style={styles.levelBadgeValue}>{companion.level}</Text>
           </View>
         </View>
-        <Text style={styles.moodText}>Humeur : {companion.mood}</Text>
 
-        {/* XP Progress Bar */}
         <View style={styles.progressSection}>
           <View style={styles.progressMeta}>
-            <Text style={styles.levelLabel}>Niveau {companion.level}</Text>
+            <Text style={styles.levelLabel}>Progression</Text>
             <Text style={styles.xpLabel}>
               {companion.xp} / {companion.xpToNextLevel} XP
             </Text>
@@ -51,19 +57,18 @@ export default function HomeScreen({
           </View>
         </View>
 
-        {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{companion.stats.int}</Text>
-            <Text style={styles.statLabel}>Intelligence</Text>
+            <Text style={styles.statLabel}>INT</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{companion.stats.emo}</Text>
-            <Text style={styles.statLabel}>Émotion</Text>
+            <Text style={styles.statLabel}>EMO</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{companion.stats.agi}</Text>
-            <Text style={styles.statLabel}>Agilité</Text>
+            <Text style={styles.statLabel}>AGI</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{companion.stats.bond}%</Text>
@@ -72,54 +77,69 @@ export default function HomeScreen({
         </View>
       </View>
 
-      {/* Quick Action Chips (Meta Native Tool Calling & Memory) */}
-      <Text style={styles.sectionTitle}>ACTIONS RAPIDES (META LLAMA 3.3)</Text>
-      <View style={styles.chipsRow}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionEyebrow}>Actions rapides</Text>
+        <Text style={styles.sectionTitle}>Ce que ton compagnon peut faire maintenant</Text>
+      </View>
+
+      <View style={styles.actionsGrid}>
         <TouchableOpacity
-          style={styles.actionChip}
+          style={styles.actionCard}
           activeOpacity={0.7}
           onPress={() => onNavigateToChat('Rappelle-moi de répéter la démo du hackathon à 16h')}
         >
-          <Text style={styles.chipEmoji}>⏰</Text>
-          <Text style={styles.chipText}>Programmer un rappel</Text>
+          <Text style={styles.cardIcon}>⏰</Text>
+          <Text style={styles.cardTitle}>Créer un rappel</Text>
+          <Text style={styles.cardText}>Planifie une alerte locale pour le pitch ou une tâche.</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionChip}
+          style={styles.actionCard}
           activeOpacity={0.7}
           onPress={() => onNavigateToChat('Cherche les dernières nouvelles sur Meta Llama 3.3')}
         >
-          <Text style={styles.chipEmoji}>🔍</Text>
-          <Text style={styles.chipText}>Recherche web en direct</Text>
+          <Text style={styles.cardIcon}>🔍</Text>
+          <Text style={styles.cardTitle}>Recherche web</Text>
+          <Text style={styles.cardText}>Récupère un résumé rapide pour nourrir la discussion.</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionChip}
+          style={styles.actionCard}
           activeOpacity={0.7}
           onPress={onNavigateToMemory}
         >
-          <Text style={styles.chipEmoji}>🧠</Text>
-          <Text style={styles.chipText}>Ce que je sais de toi</Text>
+          <Text style={styles.cardIcon}>🧠</Text>
+          <Text style={styles.cardTitle}>Mémoire persistante</Text>
+          <Text style={styles.cardText}>Consulte ce que MemoClaw a retenu de vos échanges.</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionChip}
+          style={styles.actionCard}
           activeOpacity={0.7}
           onPress={onNavigateToEvolution}
         >
-          <Text style={styles.chipEmoji}>✨</Text>
-          <Text style={styles.chipText}>Évolution visuelle Muse</Text>
+          <Text style={styles.cardIcon}>✨</Text>
+          <Text style={styles.cardTitle}>Évolution visuelle</Text>
+          <Text style={styles.cardText}>Explore les paliers de forme et l'apparence générée.</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Primary CTA */}
-      <TouchableOpacity
-        style={styles.primaryCta}
-        activeOpacity={0.8}
-        onPress={() => onNavigateToChat()}
-      >
-        <Text style={styles.ctaText}>Ouvrir le dialogue avec {companion.name} →</Text>
-      </TouchableOpacity>
+      <View style={styles.primaryPanel}>
+        <View style={styles.primaryCopy}>
+          <Text style={styles.primaryEyebrow}>Session en direct</Text>
+          <Text style={styles.primaryTitle}>Ouvrir le dialogue avec {companion.name}</Text>
+          <Text style={styles.primaryText}>
+            Passe de l'observation a l'action pour lancer un rappel, une recherche ou une discussion.
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.primaryCta}
+          activeOpacity={0.8}
+          onPress={() => onNavigateToChat()}
+        >
+          <Text style={styles.ctaText}>Commencer</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -127,158 +147,241 @@ export default function HomeScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#030712',
+    backgroundColor: colors.bg,
   },
   content: {
-    paddingBottom: 40,
+    paddingBottom: 36,
+    paddingTop: spacing.md,
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
   },
-  mascotWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
+  heroCard: {
+    overflow: 'hidden',
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.glow,
+  },
+  heroCaption: {
+    position: 'absolute',
+    bottom: 14,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(2, 6, 23, 0.82)',
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  heroCaptionText: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '700',
   },
   identityCard: {
-    marginHorizontal: 16,
-    marginTop: -10,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
-    padding: 18,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  identityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  identityCopy: {
+    flex: 1,
+    gap: 6,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
+    flexWrap: 'wrap',
   },
   companionName: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#f0f9ff',
-    letterSpacing: 0.5,
+    color: colors.text,
   },
   elementBadge: {
-    backgroundColor: 'rgba(2, 132, 199, 0.25)',
+    backgroundColor: colors.primarySoft,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.4)',
+    borderColor: colors.borderStrong,
   },
   elementText: {
-    color: '#38bdf8',
+    color: colors.primary,
     fontSize: 13,
     fontWeight: '700',
   },
   moodText: {
-    marginTop: 4,
-    color: '#94a3b8',
+    color: colors.textMuted,
     fontSize: 13,
-    fontStyle: 'italic',
+  },
+  levelBadge: {
+    minWidth: 82,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  levelBadgeLabel: {
+    color: colors.textFaint,
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  levelBadgeValue: {
+    color: colors.primary,
+    fontSize: 22,
+    fontWeight: '800',
   },
   progressSection: {
-    marginTop: 16,
+    gap: 8,
   },
   progressMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
   },
   levelLabel: {
-    color: '#e0f2fe',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   xpLabel: {
-    color: '#7dd3fc',
+    color: colors.primary,
     fontSize: 12,
     fontWeight: '600',
   },
   progressBarTrack: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    height: 10,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceMuted,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#00f0ff',
-    borderRadius: 4,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
   },
   statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
+    gap: 10,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(51, 65, 85, 0.4)',
+    borderTopColor: colors.border,
   },
   statBox: {
     alignItems: 'center',
     flex: 1,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radius.md,
+    paddingVertical: 12,
   },
   statValue: {
-    color: '#f8fafc',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   statLabel: {
     marginTop: 2,
-    color: '#64748b',
+    color: colors.textFaint,
     fontSize: 10,
     textTransform: 'uppercase',
     fontWeight: '600',
   },
-  sectionTitle: {
-    marginTop: 24,
-    marginHorizontal: 18,
-    marginBottom: 10,
-    color: '#38bdf8',
+  sectionHeader: {
+    gap: 4,
+    paddingHorizontal: 2,
+  },
+  sectionEyebrow: {
+    color: colors.primary,
     fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  chipsRow: {
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginHorizontal: 16,
+    gap: 10,
   },
-  actionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.7)',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
+  actionCard: {
+    width: '48.5%',
+    minHeight: 132,
+    backgroundColor: colors.surface,
+    padding: 14,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
-    marginBottom: 6,
+    borderColor: colors.border,
+    justifyContent: 'space-between',
   },
-  chipEmoji: {
-    fontSize: 15,
-    marginRight: 8,
+  cardIcon: {
+    fontSize: 18,
   },
-  chipText: {
-    color: '#e2e8f0',
+  cardTitle: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 10,
+  },
+  cardText: {
+    color: colors.textMuted,
     fontSize: 12,
-    fontWeight: '600',
+    lineHeight: 18,
+    marginTop: 6,
+  },
+  primaryPanel: {
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  primaryCopy: {
+    gap: 6,
+  },
+  primaryEyebrow: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  primaryTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  primaryText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
   },
   primaryCta: {
-    marginHorizontal: 16,
-    marginTop: 20,
-    backgroundColor: '#0284c7',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: radius.md,
     alignItems: 'center',
-    shadowColor: '#38bdf8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
   },
   ctaText: {
-    color: '#ffffff',
+    color: '#04111d',
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.4,

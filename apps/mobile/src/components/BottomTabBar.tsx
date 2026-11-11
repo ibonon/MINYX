@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, radius, shadow } from '../theme';
 
 export type TabKey = 'home' | 'chat' | 'memory' | 'evolution';
 
@@ -17,67 +19,71 @@ export default function BottomTabBar({ currentTab, onSelectTab }: BottomTabBarPr
   ];
 
   return (
-    <View style={styles.container}>
-      {tabs.map((tab) => {
-        const isActive = currentTab === tab.key;
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tabButton, isActive && styles.tabButtonActive]}
-            activeOpacity={0.7}
-            onPress={() => onSelectTab(tab.key)}
-          >
-            <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>{tab.icon}</Text>
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
-            {isActive && <View style={styles.activeIndicator} />}
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+    <SafeAreaView edges={['bottom']} style={styles.safeArea}>
+      <View style={styles.container}>
+        {tabs.map((tab) => {
+          const isActive = currentTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tabButton, isActive && styles.tabButtonActive]}
+              activeOpacity={0.7}
+              onPress={() => onSelectTab(tab.key)}
+            >
+              <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>{tab.icon}</Text>
+              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: colors.bg,
+  },
   container: {
     flexDirection: 'row',
-    backgroundColor: '#090d16',
+    marginHorizontal: 12,
+    marginBottom: 8,
+    backgroundColor: colors.surfaceStrong,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(56, 189, 248, 0.2)',
-    paddingBottom: 16,
-    paddingTop: 8,
+    borderTopColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.xl,
+    paddingVertical: 8,
     paddingHorizontal: 8,
+    ...shadow.glow,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 8,
+    borderRadius: radius.lg,
     position: 'relative',
+    gap: 2,
   },
-  tabButtonActive: {},
+  tabButtonActive: {
+    backgroundColor: colors.primarySoft,
+  },
   tabIcon: {
-    fontSize: 20,
-    marginBottom: 3,
-    opacity: 0.6,
+    fontSize: 18,
+    opacity: 0.65,
   },
   tabIconActive: {
     opacity: 1,
-    transform: [{ scale: 1.1 }],
+    transform: [{ scale: 1.05 }],
   },
   tabLabel: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textFaint,
     fontWeight: '700',
   },
   tabLabelActive: {
-    color: '#38bdf8',
+    color: colors.primary,
     fontWeight: '800',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: -8,
-    width: 24,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: '#00f0ff',
   },
 });

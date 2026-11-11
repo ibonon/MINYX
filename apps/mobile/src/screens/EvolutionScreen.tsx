@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { minyxMobile } from '../services/minyxEngine';
+import { colors, radius, shadow, spacing } from '../theme';
 
 export default function EvolutionScreen() {
   const stages = minyxMobile.getEvolutionStages();
@@ -19,13 +20,13 @@ export default function EvolutionScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>Évolution Visuelle</Text>
+        <Text style={styles.eyebrow}>Evolution</Text>
+        <Text style={styles.title}>Parcours visuel du compagnon</Text>
         <Text style={styles.subtitle}>
-          Génération en direct par Meta Muse Image & segmentation d'auras SAM 3.1
+          Une lecture plus claire des paliers, de l'aura et des prompts de generation.
         </Text>
       </View>
 
-      {/* Stage Selector Pills */}
       <View style={styles.stageTabs}>
         {stages.map((stage, idx) => {
           const isSelected = selectedStageIdx === idx;
@@ -49,7 +50,6 @@ export default function EvolutionScreen() {
         })}
       </View>
 
-      {/* Active Stage Card */}
       <View style={styles.stageCard}>
         <View style={styles.badgeRow}>
           <View style={styles.stageLevelBadge}>
@@ -66,7 +66,6 @@ export default function EvolutionScreen() {
         <Text style={styles.stageSubtitle}>{currentStage.subtitle}</Text>
         <Text style={styles.stageDescription}>{currentStage.description}</Text>
 
-        {/* SAM 3.1 Segmentation Features */}
         <Text style={styles.subSectionTitle}>SEGMENTATION D'AURAS (META SAM 3.1)</Text>
         <View style={styles.featuresRow}>
           {currentStage.sam3Features.map((feat) => (
@@ -76,13 +75,11 @@ export default function EvolutionScreen() {
           ))}
         </View>
 
-        {/* Muse Image Prompt Card */}
         <Text style={styles.subSectionTitle}>PROMPT GÉNÉRATIF TEMPS RÉEL (MUSE IMAGE)</Text>
         <View style={styles.promptBox}>
           <Text style={styles.promptText}>"{currentStage.musePrompt}"</Text>
         </View>
 
-        {/* Evolution Action Button */}
         {selectedStageIdx !== 0 ? (
           <TouchableOpacity
             style={styles.evolveBtn}
@@ -108,69 +105,75 @@ export default function EvolutionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#030712',
+    backgroundColor: colors.bg,
   },
   content: {
-    padding: 16,
+    padding: spacing.md,
     paddingBottom: 40,
+    gap: spacing.md,
   },
   header: {
-    marginBottom: 16,
+    gap: 6,
+  },
+  eyebrow: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#38bdf8',
-    letterSpacing: 0.5,
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 3,
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
   stageTabs: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 16,
   },
   stageTab: {
     flex: 1,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   stageTabActive: {
-    backgroundColor: 'rgba(2, 132, 199, 0.25)',
-    borderColor: '#38bdf8',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.borderStrong,
   },
   stageTabLevel: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textFaint,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   stageTabLevelActive: {
-    color: '#38bdf8',
+    color: colors.primary,
   },
   stageTabTitle: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textMuted,
     fontWeight: '700',
     marginTop: 2,
   },
   stageTabTitleActive: {
-    color: '#f8fafc',
+    color: colors.text,
   },
   stageCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderColor: colors.border,
     padding: 18,
+    ...shadow.glow,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -179,13 +182,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   stageLevelBadge: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: colors.primarySoft,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: radius.pill,
   },
   stageLevelText: {
-    color: '#38bdf8',
+    color: colors.primary,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -203,25 +206,25 @@ const styles = StyleSheet.create({
   stageTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: colors.text,
   },
   stageSubtitle: {
     fontSize: 13,
-    color: '#7dd3fc',
+    color: colors.primary,
     fontWeight: '600',
     marginTop: 2,
     marginBottom: 10,
   },
   stageDescription: {
     fontSize: 13,
-    color: '#cbd5e1',
+    color: colors.textSoft,
     lineHeight: 19,
     marginBottom: 16,
   },
   subSectionTitle: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#64748b',
+    color: colors.textFaint,
     letterSpacing: 0.8,
     marginTop: 10,
     marginBottom: 8,
@@ -233,45 +236,40 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   featurePill: {
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
+    borderColor: colors.border,
   },
   featureText: {
-    color: '#e2e8f0',
+    color: colors.textSoft,
     fontSize: 11,
     fontWeight: '600',
   },
   promptBox: {
-    backgroundColor: 'rgba(2, 6, 23, 0.7)',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radius.md,
     padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(51, 65, 85, 0.5)',
+    borderColor: colors.border,
     marginBottom: 18,
   },
   promptText: {
-    color: '#94a3b8',
+    color: colors.textMuted,
     fontSize: 11,
     fontStyle: 'italic',
     lineHeight: 16,
   },
   evolveBtn: {
-    backgroundColor: '#0284c7',
+    backgroundColor: colors.primary,
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: radius.md,
     alignItems: 'center',
-    shadowColor: '#38bdf8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 4,
   },
   evolveBtnText: {
-    color: '#ffffff',
+    color: '#04111d',
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.4,
