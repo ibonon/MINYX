@@ -5,6 +5,73 @@ import * as THREE from 'three';
 
 export type ElementType = 'Feu' | 'Eau' | 'Ténèbres' | 'Lumière' | 'Terre' | 'Vent' | 'Cosmos';
 
+// Palette according to element (constante de module : référence stable pour le useEffect)
+const elementColors: Record<ElementType, {
+  primary: number;
+  secondary: number;
+  glow: number;
+  innerEar: number;
+  light: number;
+  ringColor: number;
+}> = {
+  Eau: {
+    primary: 0x38bdf8,     // Bright glowing cyan
+    secondary: 0x0284c7,   // Deep sea blue
+    glow: 0x00f0ff,        // Neon cyan
+    innerEar: 0x0369a1,
+    light: 0x7dd3fc,
+    ringColor: 0x00d2ff,
+  },
+  Feu: {
+    primary: 0xf87171,     // Fire red-orange
+    secondary: 0xdc2626,
+    glow: 0xff3b30,
+    innerEar: 0x991b1b,
+    light: 0xfca5a5,
+    ringColor: 0xff5533,
+  },
+  Ténèbres: {
+    primary: 0xa78bfa,     // Shadow violet
+    secondary: 0x6366f1,
+    glow: 0x8b5cf6,
+    innerEar: 0x4338ca,
+    light: 0xc4b5fd,
+    ringColor: 0x9333ea,
+  },
+  Lumière: {
+    primary: 0xfde047,     // Radiant Gold
+    secondary: 0xeab308,
+    glow: 0xffea00,
+    innerEar: 0xca8a04,
+    light: 0xfef08a,
+    ringColor: 0xfacc15,
+  },
+  Terre: {
+    primary: 0x4ade80,     // Emerald nature
+    secondary: 0x16a34a,
+    glow: 0x22c55e,
+    innerEar: 0x15803d,
+    light: 0x86efac,
+    ringColor: 0x10b981,
+  },
+  Vent: {
+    primary: 0x2dd4bf,     // Wind turquoise
+    secondary: 0x0d9488,
+    glow: 0x14b8a6,
+    innerEar: 0x0f766e,
+    light: 0x5eead4,
+    ringColor: 0x06b6d4,
+  },
+  Cosmos: {
+    primary: 0xe879f9,     // Cosmic magenta
+    secondary: 0x9333ea,
+    glow: 0xd946ef,
+    innerEar: 0x7e22ce,
+    light: 0xf0abfc,
+    ringColor: 0xa855f7,
+  },
+};
+
 interface Mascot3DProps {
   element?: ElementType;
   interactive?: boolean;
@@ -19,73 +86,6 @@ export default function Mascot3D({
   onMascotClick,
 }: Mascot3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-
-  // Palette according to element
-  const elementColors: Record<ElementType, {
-    primary: number;
-    secondary: number;
-    glow: number;
-    innerEar: number;
-    light: number;
-    ringColor: number;
-  }> = {
-    Eau: {
-      primary: 0x38bdf8,     // Bright glowing cyan
-      secondary: 0x0284c7,   // Deep sea blue
-      glow: 0x00f0ff,        // Neon cyan
-      innerEar: 0x0369a1,
-      light: 0x7dd3fc,
-      ringColor: 0x00d2ff,
-    },
-    Feu: {
-      primary: 0xf87171,     // Fire red-orange
-      secondary: 0xdc2626,
-      glow: 0xff3b30,
-      innerEar: 0x991b1b,
-      light: 0xfca5a5,
-      ringColor: 0xff5533,
-    },
-    Ténèbres: {
-      primary: 0xa78bfa,     // Shadow violet
-      secondary: 0x6366f1,
-      glow: 0x8b5cf6,
-      innerEar: 0x4338ca,
-      light: 0xc4b5fd,
-      ringColor: 0x9333ea,
-    },
-    Lumière: {
-      primary: 0xfde047,     // Radiant Gold
-      secondary: 0xeab308,
-      glow: 0xffea00,
-      innerEar: 0xca8a04,
-      light: 0xfef08a,
-      ringColor: 0xfacc15,
-    },
-    Terre: {
-      primary: 0x4ade80,     // Emerald nature
-      secondary: 0x16a34a,
-      glow: 0x22c55e,
-      innerEar: 0x15803d,
-      light: 0x86efac,
-      ringColor: 0x10b981,
-    },
-    Vent: {
-      primary: 0x2dd4bf,     // Wind turquoise
-      secondary: 0x0d9488,
-      glow: 0x14b8a6,
-      innerEar: 0x0f766e,
-      light: 0x5eead4,
-      ringColor: 0x06b6d4,
-    },
-    Cosmos: {
-      primary: 0xe879f9,     // Cosmic magenta
-      secondary: 0x9333ea,
-      glow: 0xd946ef,
-      innerEar: 0x7e22ce,
-      light: 0xf0abfc,
-      ringColor: 0xa855f7,
-    },
-  };
 
   useEffect(() => {
     const container = mountRef.current;

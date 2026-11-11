@@ -13,7 +13,7 @@ interface CompanionModelViewerProps {
 }
 
 export default function CompanionModelViewer({
-  modelUrl = '/models/companion.glb',
+  modelUrl = '/models/mascot.glb',
   element = 'Eau',
   interactive = true,
   className = '',
@@ -48,39 +48,62 @@ export default function CompanionModelViewer({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
-    // --- 2. Lighting Setup (Cyan Bioluminescent Glow & Rim Lighting) ---
+    // Dynamic Element Color Scheme
+    let primaryHex = 0x38bdf8;
+    let secondaryHex = 0x00f0ff;
+    if (element === 'Feu') {
+      primaryHex = 0xf97316;
+      secondaryHex = 0xef4444;
+    } else if (element === 'Ténèbres') {
+      primaryHex = 0xa855f7;
+      secondaryHex = 0x818cf8;
+    } else if (element === 'Lumière') {
+      primaryHex = 0xeab308;
+      secondaryHex = 0xfef08a;
+    } else if (element === 'Terre') {
+      primaryHex = 0x10b981;
+      secondaryHex = 0x34d399;
+    } else if (element === 'Vent') {
+      primaryHex = 0x0284c7;
+      secondaryHex = 0x38bdf8;
+    } else if (element === 'Cosmos') {
+      primaryHex = 0x6366f1;
+      secondaryHex = 0xc084fc;
+    }
+
+    // --- 2. Lighting Setup (Element Bioluminescent Glow & Rim Lighting) ---
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0x7dd3fc, 3.2);
+    const keyLight = new THREE.DirectionalLight(primaryHex, 3.2);
     keyLight.position.set(3, 4, 4);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x00f0ff, 4.5);
+    const rimLight = new THREE.DirectionalLight(secondaryHex, 4.5);
     rimLight.position.set(-3.5, 1.5, -3);
     scene.add(rimLight);
 
-    const chestEmblemLight = new THREE.PointLight(0x38bdf8, 4.0, 6);
+    const chestEmblemLight = new THREE.PointLight(primaryHex, 4.0, 6);
     chestEmblemLight.position.set(0, -0.2, 1.2);
     scene.add(chestEmblemLight);
 
     // Floor glow light
-    const floorLight = new THREE.PointLight(0x00d4ff, 3.5, 7);
+    const floorLight = new THREE.PointLight(secondaryHex, 3.5, 7);
     floorLight.position.set(0, -1.8, 0.5);
     scene.add(floorLight);
 
-    // --- 2.1 Holographic Neon Rings Pedestal (Matching reference image) ---
+    // --- 2.1 Holographic Neon Rings Pedestal ---
     const floorGroup = new THREE.Group();
     floorGroup.position.set(0, -1.55, 0);
     floorGroup.rotation.x = Math.PI / 2;
 
     const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
+      color: secondaryHex,
       transparent: true,
       opacity: 0.85,
     });
     const innerRingMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: primaryHex,
       transparent: true,
       opacity: 0.65,
     });
@@ -97,7 +120,7 @@ export default function CompanionModelViewer({
 
     // Glowing orbital node dots
     const dotGeo = new THREE.SphereGeometry(0.04, 12, 12);
-    const dotMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const dotMat = new THREE.MeshBasicMaterial({ color: primaryHex });
     for (let i = 0; i < 4; i++) {
       const angle = (i * Math.PI) / 2;
       const dot = new THREE.Mesh(dotGeo, dotMat);
@@ -289,7 +312,7 @@ export default function CompanionModelViewer({
 
       {loadError && (
         <div className="absolute inset-x-4 bottom-4 z-20 pointer-events-auto p-3.5 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-xs text-cyan-200">
-          Impossible de charger le fichier .glb. Vérifie qu'il est présent dans public/models/companion.glb.
+          Impossible de charger le fichier .glb. Vérifie qu&apos;il est présent dans public/models/companion.glb.
         </div>
       )}
     </div>

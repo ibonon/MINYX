@@ -1,10 +1,30 @@
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { metaLlama, museImageService, HackathonElement, EvolutionStage, memoClaw, minyxToolkit, ReminderItem, SearchResult } from '@minyx/api';
+import dynamic from 'next/dynamic';
+import {
+  museImageService,
+  HackathonElement,
+  EvolutionStage,
+  ResponseSource,
+  LlamaToolCall,
+  ReminderView,
+  ReminderSummary,
+  SearchResult,
+  CompanionView,
+} from '@minyx/api/client';
 import { sounds } from '../lib/sound';
 import MemoClawModal from './MemoClawModal';
+import { companions, reminders as remindersApi } from '../lib/client-api';
+
+const CompanionModelViewer = dynamic(() => import('./CompanionModelViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      <span className="mt-2 text-[10px] font-mono text-cyan-400/70">Chargement 3D...</span>
+    </div>
+  ),
+});
 
 interface MetaDemoFlowProps {
   onBackToHome: () => void;
@@ -15,13 +35,27 @@ interface ChatEntry {
   sender: 'user' | 'companion';
   text: string;
   time: string;
-  toolCall?: {
-    name: 'create_reminder' | 'web_search';
-    parameters: Record<string, string>;
-    result: { success: boolean; data: ReminderItem | SearchResult };
-  };
+  toolCall?: LlamaToolCall;
   factsStored?: string[];
+  /** Origine réelle de la réponse : évite d'attribuer au modèle ce qu'il n'a pas produit. */
+  source?: ResponseSource;
+  modelUsed?: string;
 }
+
+/** Réponse de la route serveur /api/companion/chat. */
+interface CompanionChatApiResponse {
+  conversationId: string;
+  response: {
+    content: string;
+    toolCall?: LlamaToolCall;
+    factsStored?: string[];
+    modelUsed: string;
+    source: ResponseSource;
+  };
+  companion: CompanionView | null;
+}
+
+type MetaApiStatus = 'checking' | 'configured' | 'not_configured';
 
 export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
   // Companion state
@@ -32,7 +66,7 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
   const [xp, setXp] = useState(30);
   const [xpMax, setXpMax] = useState(100);
 
-  // Muse Image prompt state
+  // Prompt Muse Image (assemblé mais jamais envoyé pour l'instant)
   const [musePrompt, setMusePrompt] = useState<string>('');
   const [isGeneratingVisual, setIsGeneratingVisual] = useState(false);
 
@@ -41,13 +75,50 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
   const [inputText, setInputText] = useState('');
   const [isLlamaThinking, setIsLlamaThinking] = useState(false);
 
+  // État réel de l'intégration Meta Model API (lu depuis le serveur, jamais supposé)
+  const [metaApiStatus, setMetaApiStatus] = useState<MetaApiStatus>('checking');
+  const [metaApiModel, setMetaApiModel] = useState<string | null>(null);
+
   // MemoClaw Modal
   const [isMemoClawOpen, setIsMemoClawOpen] = useState(false);
 
   // Reminders tray
-  const [activeReminders, setActiveReminders] = useState<ReminderItem[]>([]);
+  const [activeReminders, setActiveReminders] = useState<ReminderView[]>([]);
+
+  // Compagnon réel du compte (la démo parle au vrai backend) + gate honnête
+  const [realCompanion, setRealCompanion] = useState<CompanionView | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  // État réel de l'intégration + compagnon du compte (une seule source : le serveur)
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/health')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((data: { metaApi?: { configured?: boolean; model?: string | null } }) => {
+        if (cancelled) return;
+        setMetaApiStatus(data.metaApi?.configured ? 'configured' : 'not_configured');
+        setMetaApiModel(data.metaApi?.model ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setMetaApiStatus('not_configured');
+      });
+
+    companions
+      .list()
+      .then((result) => {
+        if (!cancelled) setRealCompanion(result.companions[0] ?? null);
+      })
+      .catch(() => {
+        // Pas de session : la démo le dira honnêtement au premier message.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Initial Invocation on mount
   useEffect(() => {
@@ -70,8 +141,13 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setActiveReminders(minyxToolkit.getReminders('demo-user'));
-  }, [messages, isLlamaThinking]);
+    remindersApi
+      .list(realCompanion?.id)
+      .then((result) => setActiveReminders(result.reminders))
+      .catch(() => {
+        // Sans session ou sans compagnon : plateau vide, aucun faux rappel.
+      });
+  }, [messages, isLlamaThinking, realCompanion?.id]);
 
   // Generate new visual via Meta Muse Image
   const handleTriggerMuseGeneration = async (elem: HackathonElement, lvl: number, mood = 'happy') => {
@@ -102,8 +178,17 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
     const textToSend = customText || inputText;
     if (!textToSend.trim() || isLlamaThinking) return;
 
+    // Honnêteté : sans compte (ou sans compagnon), aucun faux dialogue généré.
+    if (!realCompanion) {
+      setAuthNotice(
+        'La démo parle au vrai backend : connecte-toi et crée ton compagnon pour discuter avec le modèle.'
+      );
+      return;
+    }
+
     sounds.playClick();
     if (!customText) setInputText('');
+    setAuthNotice(null);
 
     const userEntry: ChatEntry = {
       id: Date.now().toString(),
@@ -116,46 +201,54 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
     setIsLlamaThinking(true);
 
     try {
-      const response = await metaLlama.chat('demo-user', element, companionName, textToSend);
+      const res = await fetch('/api/companion/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companionId: realCompanion.id,
+          message: textToSend,
+        }),
+      });
 
-      setTimeout(() => {
-        setIsLlamaThinking(false);
-        sounds.playCompanionVoice(element);
+      if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
 
-        const companionEntry: ChatEntry = {
-          id: (Date.now() + 1).toString(),
-          sender: 'companion',
-          text: response.content,
-          time: 'À l\'instant',
-          toolCall: response.toolCall,
-          factsStored: response.factsStored,
-        };
+      const data = (await res.json()) as CompanionChatApiResponse;
+      const response = data.response;
 
-        setMessages((prev) => [...prev, companionEntry]);
+      setIsLlamaThinking(false);
+      sounds.playCompanionVoice(element);
 
-        // If tool was create_reminder, update tray
-        if (response.toolCall?.name === 'create_reminder') {
-          setActiveReminders(minyxToolkit.getReminders('demo-user'));
-          sounds.playChime();
-        }
+      const companionEntry: ChatEntry = {
+        id: (Date.now() + 1).toString(),
+        sender: 'companion',
+        text: response.content,
+        time: 'À l\'instant',
+        toolCall: response.toolCall,
+        factsStored: response.factsStored,
+        source: response.source,
+        modelUsed: response.modelUsed,
+      };
 
-        // Award XP for interaction
-        setXp((prev) => {
-          const next = prev + 25;
-          if (next >= xpMax) {
-            const nextLvl = level + 1;
-            setLevel(nextLvl);
-            setXpMax(Math.floor(xpMax * 1.4));
-            if (nextLvl === 5 || nextLvl === 10) {
-              handleTriggerMuseGeneration(element, nextLvl);
-            }
-            return 0;
-          }
-          return next;
-        });
-      }, 750);
+      setMessages((prev) => [...prev, companionEntry]);
+
+      // If tool was create_reminder, update tray
+      if (response.toolCall?.name === 'create_reminder') {
+        remindersApi
+          .list(realCompanion.id)
+          .then((result) => setActiveReminders(result.reminders))
+          .catch(() => undefined);
+        sounds.playChime();
+      }
+
+      // Affichage synchronisé sur l'état serveur réel du compagnon
+      if (data.companion) {
+        setLevel(data.companion.level);
+        setXp(data.companion.xp);
+        setXpMax(data.companion.xpToNextLevel);
+      }
     } catch {
       setIsLlamaThinking(false);
+      setAuthNotice('Le serveur n\'a pas répondu. Réessaie dans un instant.');
     }
   };
 
@@ -187,28 +280,33 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
               MINYX • DÉMO META HACKATHON
             </span>
             <span className="text-[10px] font-share-tech text-cyan-400">
-              Track: Indie Developer • Theme: "Build for Your World"
+              Track: Indie Developer • Theme: &quot;Build for Your World&quot;
             </span>
           </div>
         </div>
 
-        {/* Model Stack Badges */}
+        {/* Model Stack Badges — état réel, jamais une capacité supposée */}
         <div className="hidden lg:flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-[10px] font-mono text-cyan-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            LLAMA 3.3 (REASONING &amp; TOOL USE)
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono ${
+              metaApiStatus === 'configured'
+                ? 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300'
+                : 'bg-zinc-900/80 border-zinc-700/50 text-zinc-400'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                metaApiStatus === 'configured' ? 'bg-cyan-400 animate-pulse' : 'bg-zinc-500'
+              }`}
+            />
+            {metaApiStatus === 'configured'
+              ? `META MODEL API CONNECTÉE${metaApiModel ? ` • ${metaApiModel}` : ''}`
+              : metaApiStatus === 'checking'
+              ? 'META MODEL API • VÉRIFICATION…'
+              : 'META MODEL API NON CONFIGURÉE • RÉPONSES SCRIPTÉES'}
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-[10px] font-mono text-purple-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-            MUSE IMAGE (LIVE GEN)
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-950/80 border border-sky-500/40 text-[10px] font-mono text-sky-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-            SAM 3.1 (SEGMENTED AURA)
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[10px] font-mono text-emerald-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            MEMOCLAW (SQLITE)
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900/80 border border-zinc-700/50 text-[10px] font-mono text-zinc-500">
+            MUSE IMAGE · SAM 3.1 : NON INTÉGRÉS
           </div>
         </div>
 
@@ -232,12 +330,12 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
           </span>
           <span className="flex items-center gap-1.5 text-gray-300">
             <span className="w-5 h-5 rounded-full bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-[10px] text-cyan-300 font-bold">1</span>
-            <span>0:00 Invocation Muse Image</span>
+            <span>0:00 Invocation du compagnon</span>
           </span>
           <span>→</span>
           <span className="flex items-center gap-1.5 text-gray-300">
             <span className="w-5 h-5 rounded-full bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-[10px] text-cyan-300 font-bold">2</span>
-            <span>0:30 Personnalité Llama</span>
+            <span>0:30 Personnalité du compagnon</span>
           </span>
           <span>→</span>
           <span className="flex items-center gap-1.5 text-gray-300">
@@ -252,7 +350,7 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
           <span>→</span>
           <span className="flex items-center gap-1.5 text-gray-300">
             <span className="w-5 h-5 rounded-full bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-[10px] text-cyan-300 font-bold">5</span>
-            <span>2:40 Évolution Muse Image en Direct</span>
+            <span>2:40 Évolution du compagnon</span>
           </span>
         </div>
       </div>
@@ -260,7 +358,7 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
       {/* 3. MAIN WORKSPACE: COMPANION STAGE & CONVERSATION ENGINE */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* LEFT COLUMN: LIVE COMPANION GENERATED BY MUSE IMAGE (5 cols) */}
+        {/* LEFT COLUMN: visuel de démo statique + prompt Muse Image préparé (non envoyé) */}
         <section className="lg:col-span-5 flex flex-col items-center p-6 rounded-3xl bg-gradient-to-b from-[#051122]/90 via-[#030a16]/90 to-[#02050e]/95 border border-cyan-800/40 shadow-2xl relative overflow-hidden backdrop-blur-md">
           
           {/* Header Controls: 3 Elements Focus */}
@@ -286,31 +384,20 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
             </div>
           </div>
 
-          {/* Real-time Muse Image Visual Container */}
+          {/* Companion visual container (Real Interactive 3D WebGL Model) */}
           <div className="relative w-full aspect-square max-w-[340px] my-3 rounded-2xl overflow-hidden border border-cyan-500/30 shadow-[0_0_40px_rgba(56,189,248,0.25)] flex items-center justify-center bg-black/60">
-            {/* The Reference High-Res Artwork Asset */}
-            <Image
-              src="/hero-bg.jpg"
-              alt="Minyx Muse Image Generated Companion"
-              fill
-              className={`object-cover transition-transform duration-700 ${isGeneratingVisual ? 'scale-110 blur-sm opacity-50' : 'scale-100 opacity-100'}`}
+            <CompanionModelViewer
+              modelUrl="/models/mascot.glb"
+              element={element}
+              interactive={true}
             />
 
-            {/* SAM 3.1 Segmented Animated Energy Rings Overlay */}
-            <div 
-              className="absolute inset-x-8 bottom-4 h-16 pointer-events-none rounded-full border-2 border-cyan-400/80 animate-pulse"
-              style={{
-                transform: 'rotateX(72deg)',
-                boxShadow: '0 0 25px rgba(56, 189, 248, 0.8), inset 0 0 15px rgba(56, 189, 248, 0.5)'
-              }}
-            />
-
-            {/* Generation Spinner */}
+            {/* Transition de stade */}
             {isGeneratingVisual && (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
                 <div className="w-12 h-12 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin" />
                 <span className="mt-3 text-xs font-share-tech text-cyan-300 uppercase tracking-widest animate-pulse">
-                  Génération Muse Image en direct...
+                  Évolution du stade en cours...
                 </span>
               </div>
             )}
@@ -338,21 +425,21 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
             </div>
           </div>
 
-          {/* Live Muse Image Prompt Inspector */}
+          {/* Muse Image prompt préparé — aucune génération n'est envoyée aujourd'hui */}
           <div className="w-full p-3 rounded-2xl bg-black/60 border border-cyan-900/50 text-left">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-mono text-purple-300 uppercase tracking-wider">
-                🎨 Prompt Meta Muse Image (Temps Réel) :
+              <span className="text-[10px] font-mono text-cyan-300/80 uppercase tracking-wider">
+                🎨 Prompt Muse Image préparé (non envoyé) :
               </span>
               <button
                 onClick={handleEvolve}
-                className="text-[10px] px-2 py-0.5 rounded bg-purple-950 border border-purple-500/50 text-purple-200 hover:bg-purple-900 transition-colors font-mono"
+                className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-600/50 text-cyan-200 hover:bg-cyan-900 transition-colors font-mono"
               >
                 + Faire Évoluer
               </button>
             </div>
             <p className="text-[11px] text-gray-300 font-mono leading-relaxed line-clamp-3">
-              "{musePrompt || 'Initialisation du prompt de génération...'}"
+              &quot;{musePrompt || 'Initialisation du prompt de génération...'}&quot;
             </p>
           </div>
 
@@ -425,11 +512,15 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
                 >
                   <p>{msg.text}</p>
 
-                  {/* Tool Call Result Card (Meta Function Calling) */}
+                  {/* Tool Call Result Card */}
                   {msg.toolCall && (
                     <div className="mt-3 p-3 rounded-xl bg-cyan-950/80 border border-cyan-500/50 text-xs">
                       <div className="flex items-center justify-between mb-1 font-mono text-[11px] text-cyan-300">
-                        <span className="font-bold">⚡ Meta Llama Tool Executed:</span>
+                        <span className="font-bold">
+                          {msg.source === 'meta-api'
+                            ? '⚡ Outil choisi par le modèle :'
+                            : '⚡ Outil déclenché par mot-clé (modèle non branché) :'}
+                        </span>
                         <span className="px-1.5 py-0.5 rounded bg-black/60 text-cyan-400">
                           {msg.toolCall.name}
                         </span>
@@ -437,16 +528,21 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
                       
                       {msg.toolCall.name === 'create_reminder' && (
                         <div className="text-white mt-1">
-                          <div>📅 <strong>Rappel :</strong> {(msg.toolCall.result.data as ReminderItem).title}</div>
-                          <div className="text-[11px] text-cyan-300 mt-0.5">⏰ Échéance : {(msg.toolCall.result.data as ReminderItem).when}</div>
-                          <div className="text-[10px] text-emerald-400 mt-1">✓ Enregistré avec succès dans la base de données</div>
+                          <div>📅 <strong>Rappel :</strong> {(msg.toolCall.result.data as ReminderSummary).title}</div>
+                          <div className="text-[11px] text-cyan-300 mt-0.5">⏰ Échéance : {(msg.toolCall.result.data as ReminderSummary).when}</div>
+                          <div className="text-[10px] text-emerald-400 mt-1">✓ Enregistré localement dans ton navigateur</div>
                         </div>
                       )}
 
                       {msg.toolCall.name === 'web_search' && (
                         <div className="text-white mt-1 space-y-1">
-                          <div className="text-[11px] text-cyan-200">🔍 Requête : "{(msg.toolCall.result.data as SearchResult).query}"</div>
+                          <div className="text-[11px] text-cyan-200">🔍 Requête : &quot;{(msg.toolCall.result.data as SearchResult).query}&quot;</div>
                           <div className="text-[11px] text-gray-300">{(msg.toolCall.result.data as SearchResult).sources[0]?.snippet}</div>
+                          {msg.source === 'scripted-fallback' && (
+                            <div className="text-[10px] text-amber-400/90">
+                              Résultat simulé — pas d&apos;appel à un moteur de recherche réel (étape 3.2).
+                            </div>
+                          )}
                           <a
                             href={(msg.toolCall.result.data as SearchResult).sources[0]?.url}
                             target="_blank"
@@ -464,13 +560,20 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
                   {msg.factsStored && msg.factsStored.length > 0 && (
                     <div className="mt-2 text-[10px] text-cyan-400/90 font-mono flex items-center gap-1">
                       <span>🧠 MemoClaw a retenu :</span>
-                      <span>"{msg.factsStored[0]}"</span>
+                      <span>&quot;{msg.factsStored[0]}&quot;</span>
                     </div>
                   )}
                 </div>
 
                 <span className="text-[10px] text-gray-500 mt-1 px-1 font-mono">
-                  {msg.sender === 'companion' ? `${companionName} (Meta Llama 3.3)` : 'Toi'} • {msg.time}
+                  {msg.sender === 'companion'
+                    ? `${companionName} • ${
+                        msg.source === 'meta-api'
+                          ? msg.modelUsed
+                          : 'mode démo scripté (modèle non branché)'
+                      }`
+                    : 'Toi'}{' '}
+                  • {msg.time}
                 </span>
               </div>
             ))}
@@ -478,7 +581,7 @@ export default function MetaDemoFlow({ onBackToHome }: MetaDemoFlowProps) {
             {isLlamaThinking && (
               <div className="flex items-center gap-2.5 text-xs text-cyan-400 italic animate-pulse p-3 rounded-2xl bg-black/40 border border-cyan-900/40 w-fit">
                 <span className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                <span>{companionName} raisonne avec Meta Llama 3.3...</span>
+                <span>{companionName} réfléchit...</span>
               </div>
             )}
 

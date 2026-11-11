@@ -9,21 +9,18 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-jakarta)', 'Inter', 'sans-serif'],
+        cinzel: ['var(--font-cinzel)', 'serif'],
+        mono: ['var(--font-share-tech)', 'monospace'],
+        'share-tech': ['var(--font-share-tech)', 'monospace'],
+      },
       colors: {
         minyx: {
-          dark: '#0a0a0f',
-          cyan: '#38bdf8',
-          blue: '#1d4ed8',
+          dark: '#020617', // slate-950
+          cyan: '#22d3ee', // cyan-400
           accent: '#06b6d4',
           neon: '#00f0ff',
-          violet: '#8b5cf6',
-          fire: '#ef4444',
-          water: '#0ea5e9',
-          darkness: '#6366f1',
-          light: '#f59e0b',
-          earth: '#10b981',
-          wind: '#06b6d4',
-          cosmos: '#a855f7',
         },
       },
       animation: {
