@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Valeurs de build (non secrètes) : le client Prisma doit pouvoir être généré.
+  DATABASE_URL: 'file:./dev.db'
+  AUTH_SECRET: 'ci-build-secret-not-used-at-runtime'
+
+jobs:
+  quality:
+    name: Lint · Build · Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client (SQLite / dev)
+        run: npx prisma generate --schema packages/api/prisma/schema.prisma
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test

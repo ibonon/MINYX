@@ -44,6 +44,22 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Local databases (dev)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Signing keys / secrets
+*.keystore
+*.jks
+debug.keystore
+
+# Local scratch / debug artifacts
+scratch/
+
 # Tauri
 src-tauri/target/
 

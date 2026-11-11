@@ -1,21 +1,33 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "outputs": [],
+      "env": ["META_API_KEY", "META_API_BASE_URL", "META_TEXT_MODEL", "DATABASE_URL", "AUTH_SECRET"]
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": [
+        "META_API_KEY",
+        "META_API_BASE_URL",
+        "META_TEXT_MODEL",
+        "DATABASE_URL",
+        "AUTH_SECRET",
+        "TAVILY_API_KEY",
+        "BRAVE_API_KEY",
+        "EMBEDDING_API_KEY",
+        "APP_ORIGINS"
+      ]
     },
     "lint": {
       "outputs": []
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": []
     },
     "clean": {
       "cache": false
